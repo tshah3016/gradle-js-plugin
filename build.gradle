@@ -1,17 +1,15 @@
 plugins {
-    id 'com.gradle.build-scan' version '2.0.2'
     id "com.gradle.plugin-publish" version "0.9.4"
-    id "com.jfrog.bintray" version "1.6"
+    id 'maven-publish'
 }
 apply plugin: 'groovy'
-apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 apply plugin: 'jacoco'
 apply plugin: 'project-report'
 
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 defaultTasks 'clean', 'build'
 
@@ -20,13 +18,9 @@ group = 'com.eriwen'
 ext.archivesBaseName = 'gradle-js-plugin'
 ext.isSnapshot = version.endsWith("-SNAPSHOT")
 
-buildScan {
-    termsOfServiceUrl = 'https://gradle.com/terms-of-service'
-    termsOfServiceAgree = 'yes'
-}
-
 repositories {
     jcenter()
+    mavenCentral()
 }
 
 task createClasspathManifest {
@@ -42,20 +36,21 @@ task createClasspathManifest {
 }
 
 dependencies {
-    compile gradleApi()
-    compile('com.google.javascript:closure-compiler:v20160208') {
+    implementation gradleApi()
+    implementation('com.google.javascript:closure-compiler:v20160208') {
         exclude module: 'junit'
     }
-    compile('io.jdev.html2js:html2js:0.1') {
+    implementation ('io.jdev.html2js:html2js:0.1') {
         exclude module: 'groovy-all'
     }
-    testCompile gradleTestKit()
-    testCompile files(createClasspathManifest)
-    testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
+    testImplementation gradleTestKit()
+    testImplementation files(createClasspathManifest)
+    testImplementation('org.spockframework:spock-junit4:2.1-M2-groovy-3.0') {
         exclude module: 'junit-dep'
         exclude module: 'groovy-all'
     }
-    testCompile 'commons-lang:commons-lang:2.6'
+    testImplementation 'commons-lang:commons-lang:2.6'
+    testImplementation 'junit:junit:4.12'
 }
 
 compileGroovy {
@@ -120,20 +115,8 @@ signing {
     sign configurations.archives
 }
 
-bintray {
-    user = System.properties['bintrayUsername']
-    key = System.properties['bintrayApiKey']
-    publications = ['maven']
-    pkg {
-        repo = 'gradle-plugins'
-        name = 'gradle-js-plugin'
-        desc = 'Gradle plugin for working with JS.'
-        licenses = ['Apache-2.0']
-        labels = ['gradle', 'js']
-    }
-}
-
 test {
+    useJUnitPlatform()
     systemProperties['version'] = version
     testLogging {
         stackTraceFilters 'truncate', 'groovy'
@@ -179,28 +162,6 @@ jacocoTestCoverageVerification {
 gradle.taskGraph.whenReady { taskGraph ->
     tasks.withType(org.gradle.plugins.signing.Sign).all {
         required = taskGraph.hasTask(":uploadArchives") && !isSnapshot
-    }
-}
-
-install.repositories.mavenInstaller {
-    pom.project(pomConfiguration)
-    if (signing.signatory) {
-        beforeDeployment { signing.signPom(it) }
-    }
-}
-
-uploadArchives {
-    repositories.mavenDeployer {
-        if (signing.signatory) {
-            beforeDeployment { signing.signPom(it) }
-        }
-        name = 'mavenCentralReleaseDeployer'
-        repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
-            authentication(userName: System.properties['mavenCentralUsername'], password: System.properties['mavenCentralPassword'])
-            releases(updatePolicy: 'always')
-            snapshots(updatePolicy: 'always')
-        }
-        pom.project(pomConfiguration)
     }
 }
 

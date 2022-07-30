@@ -5,7 +5,9 @@ import com.eriwen.gradle.js.source.internal.DefaultJavaScriptSourceSet
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.NamedDomainObjectFactory
 import org.gradle.api.Project
+import org.gradle.api.internal.file.FileCollectionFactory
 import org.gradle.api.internal.file.FileResolver
+import org.gradle.api.model.ObjectFactory
 import org.gradle.internal.reflect.Instantiator
 import org.gradle.util.ConfigureUtil
 
@@ -14,11 +16,11 @@ class JavaScriptExtension {
 
     final NamedDomainObjectContainer<JavaScriptSourceSet> source
 
-    JavaScriptExtension(Project project, Instantiator instantiator, FileResolver fileResolver) {
+    JavaScriptExtension(Project project, Instantiator instantiator, FileResolver fileResolver, FileCollectionFactory fileCollectionFactory, ObjectFactory objectFactory) {
         source = project.container(JavaScriptSourceSet.class, new NamedDomainObjectFactory<JavaScriptSourceSet>() {
             @Override
             JavaScriptSourceSet create(String name) {
-                return instantiator.newInstance(DefaultJavaScriptSourceSet.class, name, project, instantiator, fileResolver);
+                return instantiator.newInstance(DefaultJavaScriptSourceSet.class, name, project, instantiator, fileResolver,fileCollectionFactory,objectFactory);
             }
         })
     }

@@ -7,7 +7,11 @@ import org.gradle.api.Project
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.internal.file.DefaultSourceDirectorySet
+import org.gradle.api.internal.file.FileCollectionFactory
 import org.gradle.api.internal.file.FileResolver
+import org.gradle.api.internal.model.DefaultObjectFactory
+import org.gradle.api.tasks.util.internal.PatternSets
+import org.gradle.api.tasks.util.internal.PatternSpecFactory
 import org.gradle.internal.reflect.Instantiator
 import org.gradle.util.ConfigureUtil
 import org.gradle.util.GUtil
@@ -21,15 +25,15 @@ class DefaultJavaScriptSourceSet implements JavaScriptSourceSet {
     private final JavaScriptProcessingChain processing
     private final FileCollection processed
     
-    DefaultJavaScriptSourceSet(String name, Project project, Instantiator instantiator, FileResolver fileResolver) {
+    DefaultJavaScriptSourceSet(String name, Project project, Instantiator instantiator, FileResolver fileResolver, FileCollectionFactory fileCollectionFactory, DefaultObjectFactory objectFactory) {
         this.name = name
         this.displayName = GUtil.toWords(name)
         if (GradleVersion.current().compareTo(GradleVersion.version("5.0")) >= 0) {
             this.js = project.objects.sourceDirectorySet(name, String.format("%s JavaScript source", displayName))
-        } else if (GradleVersion.current().compareTo(GradleVersion.version("2.12")) >= 0) {
+        } else if (GradleVersion.current().compareTo(GradleVersion.version("3.0")) >= 0) {
             Class fileTreeFactory = Class.forName("org.gradle.api.internal.file.collections.DefaultDirectoryFileTreeFactory")
             def directoryFileTreeFactory = fileTreeFactory.getConstructor().newInstance()
-            this.js = new DefaultSourceDirectorySet(name, String.format("%s JavaScript source", displayName), fileResolver, directoryFileTreeFactory)
+            this.js = new DefaultSourceDirectorySet(name, String.format("%s CSS source", displayName), new PatternSets.PatternSetFactory(PatternSpecFactory.INSTANCE),fileCollectionFactory, directoryFileTreeFactory, objectFactory)
         } else {
             this.js = new DefaultSourceDirectorySet(name, String.format("%s JavaScript source", displayName), fileResolver)
         }
